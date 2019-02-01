@@ -2,15 +2,10 @@ package org.openmicroscopy.api
 
 
 import groovy.transform.CompileStatic
-import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.openmicroscopy.api.extensions.ApiExtension
-import org.openmicroscopy.api.tasks.SplitTask
-import org.openmicroscopy.api.types.Language
-
-import java.nio.file.Paths
 
 @CompileStatic
 class ApiPlugin implements Plugin<Project> {
@@ -36,14 +31,14 @@ class ApiPlugin implements Plugin<Project> {
     static void configureForJava(Project project, ApiExtension api) {
         project.plugins.withType(JavaPlugin) { JavaPlugin java ->
             // Configure split tasks with java language to output to java dir
-            project.tasks.withType(SplitTask).configureEach(new Action<SplitTask>() {
-                @Override
-                void execute(SplitTask splitTask) {
-                    if (splitTask.language == Language.JAVA && !splitTask.outputDir.isAbsolute()) {
-                        splitTask.outputDir = Paths.get("$api.outputDir", "java", "$splitTask.outputDir")
-                    }
-                }
-            })
+//            project.tasks.withType(SplitTask).configureEach(new Action<SplitTask>() {
+//                @Override
+//                void execute(SplitTask splitTask) {
+//                    if (splitTask.language == Language.JAVA && !splitTask.outputDir.isAbsolute()) {
+//                        splitTask.outputDir = Paths.get("$api.outputDir", "java", "$splitTask.outputDir")
+//                    }
+//                }
+//            })
         }
     }
 

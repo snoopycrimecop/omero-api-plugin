@@ -5,7 +5,6 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
-import org.gradle.api.plugins.ExtensionContainer
 import org.openmicroscopy.api.extensions.ApiExtension
 import org.openmicroscopy.api.extensions.SplitExtension
 import org.openmicroscopy.api.factories.SplitFactory
@@ -25,15 +24,14 @@ class ApiPluginBase implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        ApiExtension api = createBaseExtension(project, project.extensions)
+        ApiExtension api = createBaseExtension(project)
         configureSplitTasks(project, api)
     }
 
     @SuppressWarnings("GrMethodMayBeStatic")
-    ApiExtension createBaseExtension(Project project, ExtensionContainer extensions) {
+    ApiExtension createBaseExtension(Project project) {
         def language = project.container(SplitExtension, new SplitFactory(project))
-
-        return extensions.create("api", ApiExtension, project, language)
+        return project.extensions.create("api", ApiExtension, project, language)
     }
 
     static void configureSplitTasks(Project project, ApiExtension api) {

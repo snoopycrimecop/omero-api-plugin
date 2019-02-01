@@ -12,6 +12,7 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.util.PatternSet
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
 
@@ -54,11 +55,11 @@ class SplitTask extends DefaultTask {
     void action() {
         language.prefixes.each { Prefix prefix ->
             // Transform prefix enum to lower case for naming
-            final def prefixName = prefix.name().toLowerCase()
-            final def extension = prefix.extension
+            String prefixName = prefix.name().toLowerCase()
+            String extension = prefix.extension
 
             // Assign default to rename
-            def nameTransformer
+            RegExpNameMapper nameTransformer
             if (!renameParams) {
                 nameTransformer = new RegExpNameMapper(DEFAULT_SOURCE_NAME,
                         DEFAULT_RESULT_NAME + ".${extension}")
@@ -66,13 +67,21 @@ class SplitTask extends DefaultTask {
                 nameTransformer = tupleToNameTransformer(prefix)
             }
 
-            project.copy { CopySpec c ->
-                c.from combinedFiles
+            project.sync { CopySpec c ->
+                c.from _getFilesInCollection(combinedFiles, "**/*.combined")
                 c.into outputDir
                 c.rename nameTransformer
                 c.filter { String line -> filerLine(line, prefixName) }
             }
         }
+    }
+
+    void combinedFiles(Object files) {
+        setCombinedFiles(files)
+    }
+
+    void setCombinedFiles(Object files) {
+        this.combinedFiles = project.files(files)
     }
 
     void language(Language lang) {
@@ -149,4 +158,10 @@ class SplitTask extends DefaultTask {
                 line.replaceAll("^\\[all]\\s?|^\\[${prefix}]\\s?", "") :
                 null
     }
+
+    private static FileCollection _getFilesInCollection(FileCollection collection, String include) {
+        PatternSet patternSet = new PatternSet().include(include)
+        return collection.asFileTree.matching(patternSet)
+    }
+
 }

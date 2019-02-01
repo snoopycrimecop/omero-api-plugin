@@ -4,8 +4,9 @@ import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
+import org.openmicroscopy.api.extensions.specs.ApiSpecification
 
-class ApiExtension {
+class ApiExtension implements ApiSpecification {
 
     final Project project
 
