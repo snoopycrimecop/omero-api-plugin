@@ -14,13 +14,17 @@ import org.openmicroscopy.api.tasks.SplitTask
 @CompileStatic
 class ApiPluginBase implements Plugin<Project> {
 
-    private static final def Log = Logging.getLogger(ApiPluginBase)
-
     /**
      * Sets the group name for the DSLPlugin tasks to reside in.
      * i.e. In a terminal, call `./gradlew tasks` to list tasks in their groups in a terminal
      */
     static final String GROUP = "omero-api"
+
+    static final String EXTENSION_NAME_API = "api"
+
+    static final String TASK_PREFIX_GENERATE = "generate"
+
+    private static final def Log = Logging.getLogger(ApiPluginBase)
 
     @Override
     void apply(Project project) {
@@ -31,12 +35,12 @@ class ApiPluginBase implements Plugin<Project> {
     @SuppressWarnings("GrMethodMayBeStatic")
     ApiExtension createBaseExtension(Project project) {
         def language = project.container(SplitExtension, new SplitFactory(project))
-        return project.extensions.create("api", ApiExtension, project, language)
+        return project.extensions.create(EXTENSION_NAME_API, ApiExtension, project, language)
     }
 
     static void configureSplitTasks(Project project, ApiExtension api) {
         api.language.all { SplitExtension split ->
-            String taskName = "split${split.name.capitalize()}"
+            String taskName = TASK_PREFIX_GENERATE + split.name.capitalize()
             project.tasks.register(taskName, SplitTask, new Action<SplitTask>() {
                 @Override
                 void execute(SplitTask t) {
