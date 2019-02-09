@@ -3,7 +3,10 @@ package org.openmicroscopy.api.extensions
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
-import org.gradle.api.file.FileCollection
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.Directory
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Provider
 import org.openmicroscopy.api.extensions.specs.ApiSpecification
 
 class ApiExtension implements ApiSpecification {
@@ -12,26 +15,35 @@ class ApiExtension implements ApiSpecification {
 
     final NamedDomainObjectContainer<SplitExtension> language
 
-    FileCollection combinedFiles
+    final ConfigurableFileCollection combinedFiles
 
-    File outputDir
+    final DirectoryProperty outputDir
 
     ApiExtension(Project project, NamedDomainObjectContainer<SplitExtension> language) {
         this.project = project
-        this.combinedFiles = project.files()
         this.language = language
+        this.combinedFiles = project.files()
+        this.outputDir = project.objects.directoryProperty()
     }
 
     void language(Action<? super NamedDomainObjectContainer<SplitExtension>> action) {
         action.execute(language)
     }
 
-    void outputDir(String dir) {
-        setOutputDir(dir)
+    void setOutputDir(String dir) {
+        setOutputDir(new File(dir))
     }
 
-    void setOutputDir(String dir) {
-        this.outputDir = new File(dir)
+    void setOutputDir(Directory dir) {
+        this.outputDir.set(dir)
+    }
+
+    void setOutputDir(File dir) {
+        this.outputDir.set(dir)
+    }
+
+    void setOutputDir(Provider<? extends Directory> dir) {
+        this.outputDir.set(dir)
     }
 
 }

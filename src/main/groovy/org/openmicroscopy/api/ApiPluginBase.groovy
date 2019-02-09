@@ -46,7 +46,7 @@ class ApiPluginBase implements Plugin<Project> {
                 void execute(SplitTask t) {
                     t.group = GROUP
                     t.description = "Splits ${split.language} from .combinedFiles files"
-                    t.outputDir = getOutputDir(api.outputDir, split.outputDir)
+                    t.outputDir =  split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) }
                     t.combinedFiles = api.combinedFiles + split.combinedFiles
                     t.language = split.language
                     t.replaceWith = split.outputName

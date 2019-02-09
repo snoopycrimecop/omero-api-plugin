@@ -4,9 +4,12 @@ import groovy.transform.CompileStatic
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.CopySpec
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.file.copy.RegExpNameMapper
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
@@ -29,19 +32,19 @@ class SplitTask extends DefaultTask {
      * Collection of .combinedFiles files to process
      */
     @InputFiles
-    FileCollection combinedFiles = project.files()
+    final ConfigurableFileCollection combinedFiles = project.files()
 
     /**
      * List of the languages we want to split from .combinedFiles files
      */
     @Input
-    Language language
+    final Property<Language> language = project.objects.property(Language)
 
     /**
      * Directory to spit out source files
      */
     @OutputDirectory
-    File outputDir
+    final DirectoryProperty outputDir = project.objects.directoryProperty()
 
     /**
      * Optional rename params (from, to) that support
@@ -49,11 +52,11 @@ class SplitTask extends DefaultTask {
      */
     @Optional
     @Input
-    Tuple2<String, String> renameParams
+    final Property<Tuple2<String, String>> renameParams = project.objects.property(Tuple2)
 
     @TaskAction
     void action() {
-        language.prefixes.each { Prefix prefix ->
+        language.get().prefixes.each { Prefix prefix ->
             // Transform prefix enum to lower case for naming
             String prefixName = prefix.name().toLowerCase()
             String extension = prefix.extension
@@ -80,8 +83,8 @@ class SplitTask extends DefaultTask {
         setCombinedFiles(files)
     }
 
-    void setCombinedFiles(Object files) {
-        this.combinedFiles = project.files(files)
+    void setCombinedFiles(Object... files) {
+        this.combinedFiles.setFrom(files)
     }
 
     void language(Language lang) {
