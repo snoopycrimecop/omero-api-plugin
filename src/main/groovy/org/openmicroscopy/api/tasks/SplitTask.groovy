@@ -24,9 +24,6 @@ import java.util.regex.Pattern
 @CompileStatic
 class SplitTask extends DefaultTask {
 
-    public static final String DEFAULT_SOURCE_NAME = "(.*?)I[.]combinedFiles"
-
-    public static final String DEFAULT_RESULT_NAME = "\$1I"
 
     /**
      * Collection of .combinedFiles files to process
@@ -52,7 +49,7 @@ class SplitTask extends DefaultTask {
      */
     @Optional
     @Input
-    final Property<Tuple2<String, String>> renameParams = project.objects.property(Tuple2)
+    final Property<ApiNamer> renameParams = project.objects.property(ApiNamer)
 
     @TaskAction
     void action() {
@@ -96,7 +93,7 @@ class SplitTask extends DefaultTask {
     }
 
     void setLanguage(Language lang) {
-        this.language = lang
+        this.language.set(lang)
     }
 
     void setLanguage(String language) {
@@ -104,7 +101,7 @@ class SplitTask extends DefaultTask {
         if (lang == null) {
             throw new GradleException("Unsupported language : ${language}")
         }
-        this.language = lang
+        setLanguage(lang)
     }
 
     void outputDir(Object dir) {
@@ -120,7 +117,7 @@ class SplitTask extends DefaultTask {
     }
 
     void rename(String sourceRegEx, String replaceWith) {
-        this.renameParams = new Tuple2<>(sourceRegEx, replaceWith)
+        this.renameParams.set(new ApiNamer(sourceRegEx, replaceWith))
     }
 
     void setReplaceWith(String replaceWith) {
@@ -128,9 +125,9 @@ class SplitTask extends DefaultTask {
     }
 
     private RegExpNameMapper tupleToNameTransformer(Prefix prefix) {
-        def first = renameParams.getFirst()
-        if (textIsNullOrEmpty(first)) {
-            first = DEFAULT_SOURCE_NAME
+        def first = renameParams.get().first
+        if (renameParams.get().first) {
+            renameParams.get().first = DEFAULT_SOURCE_NAME
         }
         def second = renameParams.getSecond()
         if (textIsNullOrEmpty(second)) {
@@ -165,6 +162,31 @@ class SplitTask extends DefaultTask {
     private static FileCollection _getFilesInCollection(FileCollection collection, String include) {
         PatternSet patternSet = new PatternSet().include(include)
         return collection.asFileTree.matching(patternSet)
+    }
+
+    static class ApiNamer {
+
+        static final String DEFAULT_SOURCE_NAME = "(.*?)I[.]combinedFiles"
+
+        static final String DEFAULT_RESULT_NAME = "\$1I"
+
+        final String sourceRegEx
+
+        final String replaceWith
+
+        ApiNamer() {
+            this(DEFAULT_SOURCE_NAME, DEFAULT_RESULT_NAME)
+        }
+
+        ApiNamer(String replaceWith) {
+            this(DEFAULT_SOURCE_NAME, replaceWith)
+        }
+
+        ApiNamer(String sourceRegEx, String replaceWith) {
+            this.sourceRegEx = sourceRegEx
+            this.replaceWith = replaceWith
+        }
+
     }
 
 }
