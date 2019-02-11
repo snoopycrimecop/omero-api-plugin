@@ -46,7 +46,7 @@ class ApiPluginBase implements Plugin<Project> {
                 void execute(SplitTask t) {
                     t.group = GROUP
                     t.description = "Splits ${split.language} from .combinedFiles files"
-                    t.outputDir =  split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) }
+                    t.outputDir = split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) }
                     t.combinedFiles = api.combinedFiles + split.combinedFiles
                     t.language = split.language
                     t.replaceWith = split.outputName
@@ -54,17 +54,4 @@ class ApiPluginBase implements Plugin<Project> {
             })
         }
     }
-
-    static File getOutputDir(File dslFile, File singleFile) {
-        if (!singleFile) {
-            return dslFile
-        }
-
-        if (!dslFile || singleFile.isAbsolute()) {
-            return singleFile
-        }
-
-        return new File(dslFile, "$singleFile")
-    }
-
 }

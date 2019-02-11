@@ -6,10 +6,12 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.CopySpec
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.file.copy.RegExpNameMapper
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
@@ -23,7 +25,6 @@ import java.util.regex.Pattern
 
 @CompileStatic
 class SplitTask extends DefaultTask {
-
 
     /**
      * Collection of .combinedFiles files to process
@@ -44,8 +45,7 @@ class SplitTask extends DefaultTask {
     final DirectoryProperty outputDir = project.objects.directoryProperty()
 
     /**
-     * Optional rename params (from, to) that support
-     * regex
+     * Optional rename params (from, to) that support regex
      */
     @Optional
     @Input
@@ -56,21 +56,18 @@ class SplitTask extends DefaultTask {
         language.get().prefixes.each { Prefix prefix ->
             // Transform prefix enum to lower case for naming
             String prefixName = prefix.name().toLowerCase()
-            String extension = prefix.extension
 
             // Assign default to rename
-            RegExpNameMapper nameTransformer
-            if (!renameParams) {
-                nameTransformer = new RegExpNameMapper(DEFAULT_SOURCE_NAME,
-                        DEFAULT_RESULT_NAME + ".${extension}")
-            } else {
-                nameTransformer = tupleToNameTransformer(prefix)
-            }
+            def params = renameParams.getOrElse(new ApiNamer())
+
+            // Add extension to ApiNamer replaceWith
+            def nameMapper = new RegExpNameMapper(params.sourceRegEx,
+                    formatSecond(prefix, params.replaceWith))
 
             project.sync { CopySpec c ->
-                c.from _getFilesInCollection(combinedFiles, "**/*.combined")
+                c.from getFilesInCollection(combinedFiles, "**/*.combined")
                 c.into outputDir
-                c.rename nameTransformer
+                c.rename nameMapper
                 c.filter { String line -> filerLine(line, prefixName) }
             }
         }
@@ -88,11 +85,19 @@ class SplitTask extends DefaultTask {
         setLanguage(lang)
     }
 
-    void language(String language) {
-        setLanguage(language)
+    void language(String lang) {
+        setLanguage(lang)
+    }
+
+    void language(Property<? extends Language> lang) {
+        setLanguage(lang)
     }
 
     void setLanguage(Language lang) {
+        this.language.set(lang)
+    }
+
+    void setLanguage(Property<? extends Language> lang) {
         this.language.set(lang)
     }
 
@@ -104,12 +109,20 @@ class SplitTask extends DefaultTask {
         setLanguage(lang)
     }
 
-    void outputDir(Object dir) {
+    void outputDir(File dir) {
         setOutputDir(dir)
     }
 
-    void setOutputDir(Object dir) {
-        this.outputDir = project.file(dir)
+    void setOutputDir(Provider<? extends Directory> provider) {
+        this.outputDir.set(provider)
+    }
+
+    void setOutputDir(Directory dir) {
+        this.outputDir.set(dir)
+    }
+
+    void setOutputDir(File dir) {
+        this.outputDir.set(dir)
     }
 
     void rename(Pattern sourceRegEx, String replaceWith) {
@@ -121,27 +134,7 @@ class SplitTask extends DefaultTask {
     }
 
     void setReplaceWith(String replaceWith) {
-        this.rename(DEFAULT_SOURCE_NAME, replaceWith)
-    }
-
-    private RegExpNameMapper tupleToNameTransformer(Prefix prefix) {
-        def first = renameParams.get().first
-        if (renameParams.get().first) {
-            renameParams.get().first = DEFAULT_SOURCE_NAME
-        }
-        def second = renameParams.getSecond()
-        if (textIsNullOrEmpty(second)) {
-            second = DEFAULT_RESULT_NAME + ".${prefix.extension}"
-        } else {
-            second = formatSecond(prefix, second)
-        }
-
-        println "Renaming from: ${first} \t to: ${second}"
-        return new RegExpNameMapper(first, second)
-    }
-
-    private static String textIsNullOrEmpty(String text) {
-        return !text?.trim()
+        this.renameParams.set(new ApiNamer(replaceWith))
     }
 
     private static String formatSecond(Prefix prefix, String second) {
@@ -159,12 +152,12 @@ class SplitTask extends DefaultTask {
                 null
     }
 
-    private static FileCollection _getFilesInCollection(FileCollection collection, String include) {
+    private static FileCollection getFilesInCollection(FileCollection collection, String include) {
         PatternSet patternSet = new PatternSet().include(include)
         return collection.asFileTree.matching(patternSet)
     }
 
-    static class ApiNamer {
+    static class ApiNamer implements Serializable {
 
         static final String DEFAULT_SOURCE_NAME = "(.*?)I[.]combinedFiles"
 

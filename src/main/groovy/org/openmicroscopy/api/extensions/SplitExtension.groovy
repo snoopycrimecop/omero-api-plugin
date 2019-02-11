@@ -35,7 +35,7 @@ class SplitExtension {
             name.toUpperCase().contains(lang.name())
         }
         if (lang) {
-            this.language.set(lang)
+            this.language.convention(lang)
         }
     }
 

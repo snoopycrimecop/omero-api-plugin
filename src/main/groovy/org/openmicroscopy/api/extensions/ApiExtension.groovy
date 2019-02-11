@@ -7,11 +7,10 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
-import org.openmicroscopy.api.extensions.specs.ApiSpecification
 
-class ApiExtension implements ApiSpecification {
+class ApiExtension {
 
-    final Project project
+    private final Project project
 
     final NamedDomainObjectContainer<SplitExtension> language
 
@@ -24,6 +23,8 @@ class ApiExtension implements ApiSpecification {
         this.language = language
         this.combinedFiles = project.files()
         this.outputDir = project.objects.directoryProperty()
+
+        this.outputDir.convention(project.layout.projectDirectory.dir("src/generated"))
     }
 
     void language(Action<? super NamedDomainObjectContainer<SplitExtension>> action) {
