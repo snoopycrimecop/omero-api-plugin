@@ -25,7 +25,7 @@ class ApiExtension {
         this.outputDir = project.objects.directoryProperty()
 
         // Set conventions
-        this.outputDir.convention(project.layout.projectDirectory.dir("src/generated"))
+        this.outputDir.convention(project.layout.projectDirectory.dir("src/api"))
     }
 
     void language(Action<? super NamedDomainObjectContainer<SplitExtension>> action) {

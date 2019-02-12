@@ -2,11 +2,11 @@ package org.openmicroscopy.api.extensions
 
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.api.Transformer
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.Property
 import org.openmicroscopy.api.types.Language
-
-import static org.openmicroscopy.api.tasks.SplitTask.ApiNamer
+import org.openmicroscopy.api.utils.ApiNamer
 
 class SplitExtension {
 
@@ -20,7 +20,7 @@ class SplitExtension {
 
     final Property<File> outputDir
 
-    final Property<ApiNamer> rename
+    final Property<ApiNamer> renamer
 
     SplitExtension(String name, Project project) {
         this.name = name
@@ -28,7 +28,7 @@ class SplitExtension {
         this.combinedFiles = project.files()
         this.language = project.objects.property(Language)
         this.outputDir = project.objects.property(File)
-        this.rename = project.objects.property(ApiNamer)
+        this.renamer = project.objects.property(ApiNamer)
 
         // Optionally set language based on name of extension
         Language lang = Language.values().find { lang ->
@@ -91,12 +91,16 @@ class SplitExtension {
         this.outputDir.set(dir)
     }
 
-    void rename(String replaceWith) {
-        rename(null, replaceWith)
+    void rename(Transformer<? extends String, ? extends String> renamer) {
+        this.renamer.set(new ApiNamer(renamer))
     }
 
     void rename(String sourceRegEx, String replaceWith) {
-        this.rename.set(new ApiNamer(sourceRegEx, replaceWith))
+        this.renamer.set(new ApiNamer(sourceRegEx, replaceWith))
+    }
+
+    void rename(String replaceWith) {
+        this.renamer.set(new ApiNamer(null, replaceWith))
     }
 
 }

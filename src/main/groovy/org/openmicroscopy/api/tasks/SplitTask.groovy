@@ -1,36 +1,33 @@
 package org.openmicroscopy.api.tasks
 
 import groovy.transform.CompileStatic
-import org.apache.commons.io.FilenameUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
-import org.gradle.api.internal.file.copy.RegExpNameMapper
+import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.api.tasks.util.PatternSet
+import org.gradle.internal.Factory
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
+import org.openmicroscopy.api.utils.ApiNamer
 
-import java.util.regex.Pattern
+import javax.inject.Inject
 
 @CompileStatic
 class SplitTask extends DefaultTask {
-
-    /**
-     * Collection of .combinedFiles files to process
-     */
-    @InputFiles
-    final ConfigurableFileCollection combinedFiles = project.files()
 
     /**
      * List of the languages we want to split from .combinedFiles files
@@ -49,7 +46,21 @@ class SplitTask extends DefaultTask {
      */
     @Optional
     @Input
-    final Property<ApiNamer> renameParams = project.objects.property(ApiNamer)
+    final Property<ApiNamer> namer = project.objects.property(ApiNamer)
+
+    private final ConfigurableFileCollection combinedFiles = project.files()
+
+    private final PatternFilterable combinedPattern
+
+    SplitTask() {
+        combinedPattern = getPatternSetFactory().create()
+                .include("**/*.combined")
+    }
+
+    @Inject
+    protected Factory<PatternSet> getPatternSetFactory() {
+        throw new UnsupportedOperationException()
+    }
 
     @TaskAction
     void action() {
@@ -58,27 +69,38 @@ class SplitTask extends DefaultTask {
             String prefixName = prefix.name().toLowerCase()
 
             // Assign default to rename
-            def params = renameParams.getOrElse(new ApiNamer())
-
-            // Add extension to ApiNamer replaceWith
-            def nameMapper = new RegExpNameMapper(params.sourceRegEx,
-                    formatSecond(prefix, params.replaceWith))
+            def apiNamer = namer.getOrElse(new ApiNamer())
 
             project.sync { CopySpec c ->
-                c.from getFilesInCollection(combinedFiles, "**/*.combined")
+                c.from combinedFiles
                 c.into outputDir
-                c.rename nameMapper
+                c.rename apiNamer.getRenamer(prefix)
                 c.filter { String line -> filerLine(line, prefixName) }
             }
         }
     }
 
-    void combinedFiles(Object files) {
-        setCombinedFiles(files)
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
+    FileTree getCombinedFiles() {
+        FileTree src = this.combinedFiles.asFileTree
+        return src.matching(combinedPattern)
     }
 
-    void setCombinedFiles(Object... files) {
-        this.combinedFiles.setFrom(files)
+    void combinedFiles(Iterable<?> paths) {
+        this.combinedFiles.from(paths)
+    }
+
+    void combinedFiles(Object... paths) {
+        this.combinedFiles.from(paths)
+    }
+
+    void setCombinedFiles(Iterable<?> paths) {
+        this.combinedFiles.setFrom(paths)
+    }
+
+    void setCombinedFiles(Object... paths) {
+        this.combinedFiles.setFrom(paths)
     }
 
     void language(Language lang) {
@@ -125,61 +147,18 @@ class SplitTask extends DefaultTask {
         this.outputDir.set(dir)
     }
 
-    void rename(Pattern sourceRegEx, String replaceWith) {
-        this.rename(sourceRegEx.pattern(), replaceWith)
+    void namer(Provider<? extends ApiNamer> provider) {
+        setNamer(provider)
     }
 
-    void rename(String sourceRegEx, String replaceWith) {
-        this.renameParams.set(new ApiNamer(sourceRegEx, replaceWith))
-    }
-
-    void setReplaceWith(String replaceWith) {
-        this.renameParams.set(new ApiNamer(replaceWith))
-    }
-
-    private static String formatSecond(Prefix prefix, String second) {
-        final int index = FilenameUtils.indexOfExtension(second)
-        if (index == -1) {
-            return "${second}.${prefix.extension}"
-        } else {
-            return second
-        }
+    void setNamer(Provider<? extends ApiNamer> provider) {
+        this.namer.set(provider)
     }
 
     private static def filerLine(String line, String prefix) {
         return line.matches("^\\[all](.*)|^\\[${prefix}](.*)") ?
                 line.replaceAll("^\\[all]\\s?|^\\[${prefix}]\\s?", "") :
                 null
-    }
-
-    private static FileCollection getFilesInCollection(FileCollection collection, String include) {
-        PatternSet patternSet = new PatternSet().include(include)
-        return collection.asFileTree.matching(patternSet)
-    }
-
-    static class ApiNamer implements Serializable {
-
-        static final String DEFAULT_SOURCE_NAME = "(.*?)I[.]combinedFiles"
-
-        static final String DEFAULT_RESULT_NAME = "\$1I"
-
-        final String sourceRegEx
-
-        final String replaceWith
-
-        ApiNamer() {
-            this(DEFAULT_SOURCE_NAME, DEFAULT_RESULT_NAME)
-        }
-
-        ApiNamer(String replaceWith) {
-            this(DEFAULT_SOURCE_NAME, replaceWith)
-        }
-
-        ApiNamer(String sourceRegEx, String replaceWith) {
-            this.sourceRegEx = sourceRegEx ?: DEFAULT_SOURCE_NAME
-            this.replaceWith = replaceWith ?: DEFAULT_RESULT_NAME
-        }
-
     }
 
 }

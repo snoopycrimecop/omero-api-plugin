@@ -45,11 +45,11 @@ class ApiPluginBase implements Plugin<Project> {
                 @Override
                 void execute(SplitTask t) {
                     t.group = GROUP
-                    t.description = "Splits ${split.language} from .combinedFiles files"
+                    t.description = "Splits ${split.language} from .combined files"
                     t.outputDir = split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) }
                     t.combinedFiles = api.combinedFiles + split.combinedFiles
                     t.language = split.language
-                    t.replaceWith = split.rename
+                    t.namer = split.renamer
                 }
             })
         }

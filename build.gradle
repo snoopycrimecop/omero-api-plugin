@@ -21,7 +21,7 @@ gradlePlugin {
     plugins {
         ApiPlugin {
             id = 'org.openmicroscopy.api'
-            implementationClass = 'org.openmicroscopy.blitz.ApiPlugin'
+            implementationClass = 'org.openmicroscopy.api.ApiPlugin'
         }
     }
 }
