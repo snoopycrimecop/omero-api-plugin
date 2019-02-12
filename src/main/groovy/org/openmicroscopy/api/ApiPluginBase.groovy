@@ -29,7 +29,10 @@ class ApiPluginBase implements Plugin<Project> {
     @Override
     void apply(Project project) {
         ApiExtension api = createBaseExtension(project)
-        configureSplitTasks(project, api)
+
+        api.language.whenObjectAdded { SplitExtension split ->
+            registerSplitTask(project, api, split)
+        }
     }
 
     @SuppressWarnings("GrMethodMayBeStatic")
@@ -38,20 +41,21 @@ class ApiPluginBase implements Plugin<Project> {
         return project.extensions.create(EXTENSION_NAME_API, ApiExtension, project, language)
     }
 
-    static void configureSplitTasks(Project project, ApiExtension api) {
-        api.language.all { SplitExtension split ->
-            String taskName = TASK_PREFIX_GENERATE + split.name.capitalize()
-            project.tasks.register(taskName, SplitTask, new Action<SplitTask>() {
-                @Override
-                void execute(SplitTask t) {
-                    t.group = GROUP
-                    t.description = "Splits ${split.language} from .combined files"
-                    t.outputDir = split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) }
-                    t.combinedFiles = api.combinedFiles + split.combinedFiles
-                    t.language = split.language
-                    t.namer = split.renamer
+    static void registerSplitTask(Project project, ApiExtension api, SplitExtension split) {
+        String taskName = TASK_PREFIX_GENERATE + split.name.capitalize()
+        project.tasks.register(taskName, SplitTask, new Action<SplitTask>() {
+            @Override
+            void execute(SplitTask t) {
+                t.with {
+                    group = GROUP
+                    setDescription("Splits ${split.language} from .combined files")
+                    setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
+                    setLanguage(split.language)
+                    setNamer(split.renamer)
+                    source api.combinedFiles + split.combinedFiles
+                    include "**/*.combined"
                 }
-            })
-        }
+            }
+        })
     }
 }

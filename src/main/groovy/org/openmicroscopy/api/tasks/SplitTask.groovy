@@ -1,66 +1,45 @@
 package org.openmicroscopy.api.tasks
 
 import groovy.transform.CompileStatic
-import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileTree
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.util.PatternFilterable
-import org.gradle.api.tasks.util.PatternSet
-import org.gradle.internal.Factory
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
 import org.openmicroscopy.api.utils.ApiNamer
 
-import javax.inject.Inject
-
 @CompileStatic
-class SplitTask extends DefaultTask {
-
-    /**
-     * List of the languages we want to split from .combinedFiles files
-     */
-    @Input
-    final Property<Language> language = project.objects.property(Language)
+class SplitTask extends SourceTask {
 
     /**
      * Directory to spit out source files
      */
-    @OutputDirectory
-    final DirectoryProperty outputDir = project.objects.directoryProperty()
+    private final DirectoryProperty outputDir = project.objects.directoryProperty()
 
     /**
      * Optional rename params (from, to) that support regex
      */
-    @Optional
-    @Input
-    final Property<ApiNamer> namer = project.objects.property(ApiNamer)
+    private final Property<ApiNamer> namer = project.objects.property(ApiNamer)
 
-    private final ConfigurableFileCollection combinedFiles = project.files()
+    /**
+     * List of the languages we want to split from .combinedFiles files
+     */
+    private final Property<Language> language = project.objects.property(Language)
 
-    private final PatternFilterable combinedPattern
-
-    SplitTask() {
-        combinedPattern = getPatternSetFactory().create()
-                .include("**/*.combined")
-    }
-
-    @Inject
-    protected Factory<PatternSet> getPatternSetFactory() {
-        throw new UnsupportedOperationException()
-    }
+    private static final Logger Log = Logging.getLogger(SplitTask)
 
     @TaskAction
     void action() {
@@ -69,49 +48,59 @@ class SplitTask extends DefaultTask {
             String prefixName = prefix.name().toLowerCase()
 
             // Assign default to rename
-            def apiNamer = namer.getOrElse(new ApiNamer())
+            ApiNamer apiNamer = namer.getOrElse(new ApiNamer())
 
             project.sync { CopySpec c ->
-                c.from combinedFiles
                 c.into outputDir
+                c.from getSource()
                 c.rename apiNamer.getRenamer(prefix)
                 c.filter { String line -> filerLine(line, prefixName) }
             }
         }
     }
 
-    @InputFiles
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     @PathSensitive(PathSensitivity.RELATIVE)
-    FileTree getCombinedFiles() {
-        FileTree src = this.combinedFiles.asFileTree
-        return src.matching(combinedPattern)
+    FileTree getSource() {
+        return super.getSource()
     }
 
-    void combinedFiles(Iterable<?> paths) {
-        this.combinedFiles.from(paths)
+    @OutputDirectory
+    DirectoryProperty getOutputDir() {
+        return this.outputDir
     }
 
-    void combinedFiles(Object... paths) {
-        this.combinedFiles.from(paths)
+    @Input
+    Property<Language> getLanugage() {
+        return this.language
     }
 
-    void setCombinedFiles(Iterable<?> paths) {
-        this.combinedFiles.setFrom(paths)
+    @Input
+    @Optional
+    Property<ApiNamer> getNamer() {
+        return this.namer
     }
 
-    void setCombinedFiles(Object... paths) {
-        this.combinedFiles.setFrom(paths)
+    void setOutputDir(File dir) {
+        this.outputDir.set(dir)
     }
 
-    void language(Language lang) {
-        setLanguage(lang)
+    void setOutputDir(Directory dir) {
+        this.outputDir.set(dir)
     }
 
-    void language(String lang) {
-        setLanguage(lang)
+    void setOutputDir(Provider<Directory> provider) {
+        this.outputDir.set(provider)
     }
 
-    void language(Property<? extends Language> lang) {
+    void setLanguage(String language) {
+        Language lang = Language.find(language)
+        if (lang == null) {
+            throw new GradleException("Unsupported language : ${language}")
+        }
         setLanguage(lang)
     }
 
@@ -123,36 +112,12 @@ class SplitTask extends DefaultTask {
         this.language.set(lang)
     }
 
-    void setLanguage(String language) {
-        Language lang = Language.find(language)
-        if (lang == null) {
-            throw new GradleException("Unsupported language : ${language}")
-        }
-        setLanguage(lang)
-    }
-
-    void outputDir(File dir) {
-        setOutputDir(dir)
-    }
-
-    void setOutputDir(Provider<? extends Directory> provider) {
-        this.outputDir.set(provider)
-    }
-
-    void setOutputDir(Directory dir) {
-        this.outputDir.set(dir)
-    }
-
-    void setOutputDir(File dir) {
-        this.outputDir.set(dir)
-    }
-
-    void namer(Provider<? extends ApiNamer> provider) {
-        setNamer(provider)
-    }
-
     void setNamer(Provider<? extends ApiNamer> provider) {
         this.namer.set(provider)
+    }
+
+    void setNamer(ApiNamer apiNamer) {
+        this.namer.set(apiNamer)
     }
 
     private static def filerLine(String line, String prefix) {
