@@ -176,8 +176,8 @@ class SplitTask extends DefaultTask {
         }
 
         ApiNamer(String sourceRegEx, String replaceWith) {
-            this.sourceRegEx = sourceRegEx
-            this.replaceWith = replaceWith
+            this.sourceRegEx = sourceRegEx ?: DEFAULT_SOURCE_NAME
+            this.replaceWith = replaceWith ?: DEFAULT_RESULT_NAME
         }
 
     }

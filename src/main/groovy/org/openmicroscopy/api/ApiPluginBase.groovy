@@ -49,7 +49,7 @@ class ApiPluginBase implements Plugin<Project> {
                     t.outputDir = split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) }
                     t.combinedFiles = api.combinedFiles + split.combinedFiles
                     t.language = split.language
-                    t.replaceWith = split.outputName
+                    t.replaceWith = split.rename
                 }
             })
         }

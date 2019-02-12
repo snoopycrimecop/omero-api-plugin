@@ -6,7 +6,7 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.Property
 import org.openmicroscopy.api.types.Language
 
-import java.util.regex.Pattern
+import static org.openmicroscopy.api.tasks.SplitTask.ApiNamer
 
 class SplitExtension {
 
@@ -20,7 +20,7 @@ class SplitExtension {
 
     final Property<File> outputDir
 
-    final Property<String> outputName
+    final Property<ApiNamer> rename
 
     SplitExtension(String name, Project project) {
         this.name = name
@@ -28,7 +28,7 @@ class SplitExtension {
         this.combinedFiles = project.files()
         this.language = project.objects.property(Language)
         this.outputDir = project.objects.property(File)
-        this.outputName = project.objects.property(String)
+        this.rename = project.objects.property(ApiNamer)
 
         // Optionally set language based on name of extension
         Language lang = Language.values().find { lang ->
@@ -91,18 +91,12 @@ class SplitExtension {
         this.outputDir.set(dir)
     }
 
-    void rename(Pattern sourceRegEx, String replaceWith) {
-        this.nameTransformer = new Tuple(
-                sourceRegEx,
-                replaceWith
-        )
+    void rename(String replaceWith) {
+        rename(null, replaceWith)
     }
 
     void rename(String sourceRegEx, String replaceWith) {
-        this.nameTransformer = new Tuple(
-                sourceRegEx,
-                replaceWith
-        )
+        this.rename.set(new ApiNamer(sourceRegEx, replaceWith))
     }
 
 }

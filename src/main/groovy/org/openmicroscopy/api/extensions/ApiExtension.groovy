@@ -24,6 +24,7 @@ class ApiExtension {
         this.combinedFiles = project.files()
         this.outputDir = project.objects.directoryProperty()
 
+        // Set conventions
         this.outputDir.convention(project.layout.projectDirectory.dir("src/generated"))
     }
 
