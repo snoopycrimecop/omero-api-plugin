@@ -1,13 +1,17 @@
 package org.openmicroscopy.api.types
+
+import groovy.transform.CompileStatic
+
 /**
  * File extension each prefix in .combinedFiles corresponds to
  */
+@CompileStatic
 enum Prefix {
-    HDR ('h'),
-    CPP ('cpp'),
-    JAV ('java'),
-    PYC ('py'),
-    ICE ('ice')
+    HDR('h'),
+    CPP('cpp'),
+    JAV('java'),
+    PYC('py'),
+    ICE('ice')
 
     Prefix(String fileExtension) {
         this.extension = fileExtension

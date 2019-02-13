@@ -39,6 +39,7 @@ class SplitTask extends SourceTask {
      */
     private final Property<Language> language = project.objects.property(Language)
 
+
     private static final Logger Log = Logging.getLogger(SplitTask)
 
     @TaskAction

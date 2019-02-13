@@ -18,11 +18,11 @@ class ApiPluginBase implements Plugin<Project> {
      * Sets the group name for the DSLPlugin tasks to reside in.
      * i.e. In a terminal, call `./gradlew tasks` to list tasks in their groups in a terminal
      */
-    static final String GROUP = "omero-api"
+    public static final String GROUP = "omero-api"
 
-    static final String EXTENSION_NAME_API = "api"
+    public static final String EXTENSION_NAME_API = "api"
 
-    static final String TASK_PREFIX_GENERATE = "generate"
+    public static final String TASK_PREFIX_GENERATE = "generate"
 
     private static final def Log = Logging.getLogger(ApiPluginBase)
 
