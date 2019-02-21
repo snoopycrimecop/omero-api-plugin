@@ -1,29 +1,27 @@
 plugins {
-    id 'groovy'
-    id 'java-gradle-plugin'
-    id 'maven-publish'
+    id "groovy"
+    id "java-gradle-plugin"
+    id "org.openmicroscopy.project" version "5.5.0-SNAPSHOT"
 }
 
-group 'org.openmicroscopy'
-version '5.5.0-SNAPSHOT'
+group = "org.openmicroscopy"
+version = "5.5.0-SNAPSHOT"
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation "junit:junit:4.12"
 
-    implementation 'commons-io:commons-io:2.6'
+    implementation "commons-io:commons-io:2.6"
 }
 
 gradlePlugin {
     plugins {
         ApiPlugin {
-            id = 'org.openmicroscopy.api'
-            implementationClass = 'org.openmicroscopy.api.ApiPlugin'
+            id = "org.openmicroscopy.api"
+            implementationClass = "org.openmicroscopy.api.ApiPlugin"
         }
     }
 }
-
-apply from: "publish.gradle"
