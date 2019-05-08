@@ -25,6 +25,7 @@ import org.gradle.api.Project
 import org.gradle.api.Transformer
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.utils.ApiNamer
 
@@ -109,6 +110,10 @@ class SplitExtension {
 
     void setOutputDir(File dir) {
         this.outputDir.set(dir)
+    }
+
+    void setOutputDir(Provider<? extends File> provider) {
+        this.outputDir.set(provider)
     }
 
     void rename(Transformer<? extends String, ? extends String> renamer) {
