@@ -72,7 +72,7 @@ class SplitTask extends SourceTask {
             ApiNamer apiNamer = namer.getOrElse(new ApiNamer())
 
             project.sync { CopySpec c ->
-                c.into outputDir
+                c.into outputDir.get()
                 c.from getSource()
                 c.rename apiNamer.getRenamer(prefix)
                 c.filter { String line -> filerLine(line, prefixName) }

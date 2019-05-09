@@ -42,7 +42,7 @@ class ApiPluginBase implements Plugin<Project> {
 
     public static final String EXTENSION_NAME_API = "api"
 
-    public static final String TASK_PREFIX_GENERATE = "generate"
+    public static final String TASK_PREFIX_COMBINED_TO = "combinedTo"
 
     private static final def Log = Logging.getLogger(ApiPluginBase)
 
@@ -50,7 +50,7 @@ class ApiPluginBase implements Plugin<Project> {
     void apply(Project project) {
         ApiExtension api = createBaseExtension(project)
 
-        api.language.whenObjectAdded { SplitExtension split ->
+        api.language.configureEach { SplitExtension split ->
             registerSplitTask(project, api, split)
         }
     }
@@ -62,19 +62,17 @@ class ApiPluginBase implements Plugin<Project> {
     }
 
     static void registerSplitTask(Project project, ApiExtension api, SplitExtension split) {
-        String taskName = TASK_PREFIX_GENERATE + split.name.capitalize()
+        String taskName = TASK_PREFIX_COMBINED_TO + split.name.capitalize()
         project.tasks.register(taskName, SplitTask, new Action<SplitTask>() {
             @Override
             void execute(SplitTask t) {
-                t.with {
-                    group = GROUP
-                    setDescription("Splits ${split.language} from .combined files")
-                    setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
-                    setLanguage(split.language)
-                    setNamer(split.renamer)
-                    source api.combinedFiles + split.combinedFiles
-                    include "**/*.combined"
-                }
+                t.group = GROUP
+                t.setDescription("Splits ${split.language} from .combined files")
+                t.setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
+                t.setLanguage(split.language)
+                t.setNamer(split.renamer)
+                t.source api.combinedFiles + split.combinedFiles
+                t.include "**/*.combined"
             }
         })
     }
