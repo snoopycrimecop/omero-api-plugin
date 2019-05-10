@@ -23,18 +23,38 @@ package org.openmicroscopy.api
 import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.openmicroscopy.api.extensions.ApiExtension
+import org.gradle.api.Task
+import org.gradle.api.plugins.JavaPlugin
+import org.openmicroscopy.api.tasks.SplitTask
+import org.openmicroscopy.api.types.Language
 
 @CompileStatic
 class ApiPlugin implements Plugin<Project> {
 
+    private Project project
+
     @Override
     void apply(Project project) {
+        this.project = project
+
         // Apply our base plugin
         project.plugins.apply(ApiPluginBase)
 
-        // Get the extension
-        project.extensions.getByType(ApiExtension)
+        configureForJavaPlugin()
+    }
+
+    void configureForJavaPlugin() {
+        project.plugins.withType(JavaPlugin) { JavaPlugin java ->
+            project.afterEvaluate {
+                project.tasks.withType(SplitTask).each { SplitTask splitTask ->
+                    if (splitTask.language.get() == Language.JAVA) {
+                        Task compileJava =
+                                project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
+                        compileJava.dependsOn(splitTask)
+                    }
+                }
+            }
+        }
     }
 
 }
