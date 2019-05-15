@@ -71,7 +71,7 @@ class SplitTask extends SourceTask {
             // Assign default to rename
             ApiNamer apiNamer = namer.getOrElse(new ApiNamer())
 
-            project.sync { CopySpec c ->
+            project.copy { CopySpec c ->
                 c.into outputDir.get()
                 c.from getSource()
                 c.rename apiNamer.getRenamer(prefix)
