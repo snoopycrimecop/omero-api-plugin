@@ -95,7 +95,7 @@ class SplitTask extends SourceTask {
     }
 
     @Input
-    Property<Language> getLanugage() {
+    Property<Language> getLanguage() {
         return this.language
     }
 
