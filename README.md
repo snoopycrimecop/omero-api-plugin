@@ -9,22 +9,7 @@ From a high level, blitz-plugin consists of the following tasks/stages:
 
 ### Usage
 
-Build script snippet for use in all Gradle versions:
-
-```groovy
-buildscript {
-    repositories {
-        mavenLocal() // If plugin is locally published
-    }
-    dependencies {
-         classpath 'org.openmicroscopy:api:1.0.0'
-    }
-}
-
-apply plugin: "org.openmicroscopy.omero-api-plugin"
-```
-
-Build script snippet for new, incubating, plugin mechanism introduced in Gradle 2.1:
+Include the following to the top of your _build.gradle_ file:
 
 ```groovy
 plugins {
