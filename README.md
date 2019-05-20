@@ -5,7 +5,7 @@ required files to use _omero-blitz_
 
 From a high level, blitz-plugin consists of the following tasks/stages:
 
-4. Process and split `xx.combined` files into chosen languages
+1. Process and split `xx.combined` files into chosen languages
 
 ### Usage
 
