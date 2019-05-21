@@ -1,7 +1,7 @@
 ### OMERO api Gradle plugin
 
-The _omero-api-plugin_ is a gradle plugin that provides users and projects the ability to generate/compile the necessary files
-required files to use _omero-blitz_
+The _omero-api-plugin_ is a gradle plugin that provides users and projects the ability to generate/compile the files
+required to use _omero-blitz_
 
 From a high level, blitz-plugin consists of the following tasks/stages:
 
@@ -9,7 +9,7 @@ From a high level, blitz-plugin consists of the following tasks/stages:
 
 ### Usage
 
-Include the following to the top of your _build.gradle_ file:
+Include the following at the top of your _build.gradle_ file:
 
 ```groovy
 plugins {
@@ -17,7 +17,7 @@ plugins {
 }
 ```
 
-### Api Plugin Methods
+### API Plugin Methods
 
 Use the api block to configure the generation of API files with `org.openmicroscopy.api.tasks.SplitTask`.
 The API block can contain one or more split tasks, each with its own chosen language for generating API files.
