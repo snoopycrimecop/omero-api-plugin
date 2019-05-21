@@ -45,7 +45,7 @@ It supports the following languages:
 * `python`
 * `ice`
 
-If you wish to use the `SplitTask` outside of the `blitz {}` scope, you can customise
+If you wish to use the `SplitTask` outside of the `blitz {}` scope, you can customize
 its functionality using
 
 ```groovy
