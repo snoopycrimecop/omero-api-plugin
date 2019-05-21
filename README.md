@@ -13,7 +13,7 @@ Include the following at the top of your _build.gradle_ file:
 
 ```groovy
 plugins {
-    id "org.openmicroscopy.api" version "1.0.0"
+    id "org.openmicroscopy.api" version "x.y.z"
 }
 ```
 
