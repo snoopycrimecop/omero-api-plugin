@@ -1,11 +1,12 @@
-### OMERO api Gradle plugin
+## OMERO api Gradle plugin
 
-The _omero-api-plugin_ is a gradle plugin that provides users and projects the ability to generate/compile the files
-required to use _omero-blitz_
+The _omero-api-plugin_ is a [Gradle](https://gradle.org) plugin that provides
+users and projects the ability to generate/compile the files required to use _omero-blitz_.
 
-From a high level, blitz-plugin consists of the following tasks/stages:
+From a high level, the omero-api-plugin consists of the following tasks/stages:
 
-1. Process and split `xx.combined` files into chosen languages
+1. Import `.ome.xml` map files from `org.openmicroscopy:omero-model` (`omero-model.jar`) resources
+2. Import `-types.properties` files from `org.openmicroscopy:omero-model` (`omero-model.jar`) resources
 
 ### Usage
 
