@@ -62,17 +62,18 @@ class ApiPluginBase implements Plugin<Project> {
     }
 
     static void registerSplitTask(Project project, ApiExtension api, SplitExtension split) {
-        String taskName = TASK_PREFIX_COMBINED_TO + split.name.capitalize()
+        String taskName = api.createTaskName(split.name)
+
         project.tasks.register(taskName, SplitTask, new Action<SplitTask>() {
             @Override
-            void execute(SplitTask t) {
-                t.group = GROUP
-                t.setDescription("Splits ${split.language} from .combined files")
-                t.setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
-                t.setLanguage(split.language)
-                t.setNamer(split.renamer)
-                t.source api.combinedFiles + split.combinedFiles
-                t.include "**/*.combined"
+            void execute(SplitTask task) {
+                task.group = GROUP
+                task.setDescription("Splits ${split.language} from .combined files")
+                task.setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
+                task.setLanguage(split.language)
+                task.setNamer(split.renamer)
+                task.source api.combinedFiles + split.combinedFiles
+                task.include "**/*.combined"
             }
         })
     }
