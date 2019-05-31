@@ -45,11 +45,9 @@ class ApiPlugin implements Plugin<Project> {
 
     void configureForJavaPlugin() {
         project.plugins.withType(JavaPlugin) { JavaPlugin java ->
-            project.afterEvaluate {
-                project.tasks.withType(SplitTask).each { SplitTask splitTask ->
-                    if (splitTask.language.get() == Language.JAVA) {
-                        Task compileJava =
-                                project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
+            project.tasks.withType(SplitTask).configureEach { SplitTask splitTask ->
+                if (splitTask.language.get() == Language.JAVA) {
+                    project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME) { Task compileJava ->
                         compileJava.dependsOn(splitTask)
                     }
                 }
