@@ -48,7 +48,7 @@ class ApiExtension {
         this.outputDir = project.objects.directoryProperty()
 
         // Set conventions
-        this.outputDir.convention(project.layout.projectDirectory.dir("src/api"))
+        this.outputDir.convention(project.layout.buildDirectory.dir("api"))
     }
 
     Provider<String> createTaskName(String name) {

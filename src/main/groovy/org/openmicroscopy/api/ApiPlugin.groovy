@@ -25,6 +25,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 import org.openmicroscopy.api.tasks.SplitTask
 import org.openmicroscopy.api.types.Language
 
@@ -47,9 +49,19 @@ class ApiPlugin implements Plugin<Project> {
         project.plugins.withType(JavaPlugin) { JavaPlugin java ->
             project.tasks.withType(SplitTask).configureEach { SplitTask splitTask ->
                 if (splitTask.language.get() == Language.JAVA) {
+                    // Set Java compileJava task to depend on the splitJava task
                     project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME) { Task compileJava ->
                         compileJava.dependsOn(splitTask)
                     }
+
+                    // Set java source set to include output of splitJava
+                    JavaPluginConvention javaConvention =
+                            project.convention.getPlugin(JavaPluginConvention)
+
+                    SourceSet main =
+                            javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+
+                    main.java.srcDirs(splitTask.outputDir)
                 }
             }
         }
