@@ -23,7 +23,6 @@ package org.openmicroscopy.api
 import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
@@ -42,19 +41,21 @@ class ApiPlugin implements Plugin<Project> {
         // Apply our base plugin
         project.plugins.apply(ApiPluginBase)
 
-        configureForJavaPlugin()
+        project.plugins.withType(JavaPlugin) {
+            configureForJavaPlugin()
+        }
     }
 
     void configureForJavaPlugin() {
-        project.plugins.withType(JavaPlugin) { JavaPlugin java ->
-            project.tasks.withType(SplitTask).configureEach { SplitTask splitTask ->
+        project.afterEvaluate {
+            project.tasks.withType(SplitTask).all { SplitTask splitTask ->
                 if (splitTask.language.get() == Language.JAVA) {
                     // Set Java compileJava task to depend on the splitJava task
-                    project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME) { Task compileJava ->
-                        compileJava.dependsOn(splitTask)
+                    project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME).configure {
+                        it.dependsOn(splitTask)
                     }
 
-                    // Set java source set to include output of splitJava
+                    // Set java source set to include output of combinedToJava task
                     JavaPluginConvention javaConvention =
                             project.convention.getPlugin(JavaPluginConvention)
 

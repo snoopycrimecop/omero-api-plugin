@@ -20,11 +20,15 @@
  */
 package org.openmicroscopy.api.tasks
 
+import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.CompilationUnit
+import com.github.javaparser.ast.PackageDeclaration
 import groovy.transform.CompileStatic
 import org.gradle.api.GradleException
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
@@ -40,6 +44,11 @@ import org.gradle.api.tasks.TaskAction
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
 import org.openmicroscopy.api.utils.ApiNamer
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 @CompileStatic
 class SplitTask extends SourceTask {
@@ -63,7 +72,7 @@ class SplitTask extends SourceTask {
     private static final Logger Log = Logging.getLogger(SplitTask)
 
     @TaskAction
-    void action() {
+    void createSources() {
         language.get().prefixes.each { Prefix prefix ->
             // Transform prefix enum to lower case for naming
             String prefixName = prefix.name().toLowerCase()
@@ -76,6 +85,36 @@ class SplitTask extends SourceTask {
                 c.from getSource()
                 c.rename apiNamer.getRenamer(prefix)
                 c.filter { String line -> filerLine(line, prefixName) }
+            }
+
+            if (prefix == Prefix.JAV) {
+                moveJavaFilesToPackage()
+            }
+        }
+    }
+
+    void moveJavaFilesToPackage() {
+        File outputDirFile = outputDir.asFile.get()
+
+        FileCollection javaSrc = project.fileTree(outputDirFile).matching {
+            include("**/*.java")
+        }
+
+        javaSrc.files.each { File javaFile ->
+            CompilationUnit cu = StaticJavaParser.parse(javaFile)
+
+            java.util.Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration()
+            if (packageDeclaration.present) {
+                String packageName = packageDeclaration.get().name
+
+                // Convert package to path, relative to outputDir
+                Path packagePath = Paths.get(outputDirFile.getPath(), packageName.replace(".", "/"))
+                if (!Files.exists(packagePath)) {
+                    Files.createDirectories(packagePath)
+                }
+
+                // Move each file to package location
+                Files.move(javaFile.toPath(), packagePath.resolve(javaFile.name), StandardCopyOption.REPLACE_EXISTING)
             }
         }
     }

@@ -29,8 +29,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
 import org.openmicroscopy.api.ApiPluginBase
 
-import java.util.concurrent.Callable
-
 class ApiExtension {
 
     private final Project project
@@ -48,16 +46,11 @@ class ApiExtension {
         this.outputDir = project.objects.directoryProperty()
 
         // Set conventions
-        this.outputDir.convention(project.layout.buildDirectory.dir("api"))
+        this.outputDir.convention(project.layout.buildDirectory.dir("generated/sources/api"))
     }
 
-    Provider<String> createTaskName(String name) {
-        project.providers.provider(new Callable<String>() {
-            @Override
-            String call() throws Exception {
-                return ApiPluginBase.TASK_PREFIX_COMBINED_TO + name.capitalize()
-            }
-        })
+    String createTaskName(String name) {
+        ApiPluginBase.TASK_PREFIX_COMBINED_TO + name.capitalize()
     }
 
     void language(Action<? super NamedDomainObjectContainer<SplitExtension>> action) {
