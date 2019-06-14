@@ -72,7 +72,7 @@ class ApiPluginBase implements Plugin<Project> {
                 task.setDescription("Splits ${split.language} from .combined files")
                 task.setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
                 task.setLanguage(split.language)
-                task.setNamer(split.renamer)
+                task.rename(split.nameTransformer)
                 task.source api.combinedFiles + split.combinedFiles
                 task.include "**/*.combined"
             }

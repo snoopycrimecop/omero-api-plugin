@@ -25,17 +25,18 @@ import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.PackageDeclaration
 import groovy.transform.CompileStatic
 import org.gradle.api.GradleException
+import org.gradle.api.Transformer
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
+import org.gradle.api.internal.file.copy.ClosureBackedTransformer
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -43,7 +44,8 @@ import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
-import org.openmicroscopy.api.utils.ApiNamer
+import org.openmicroscopy.api.utils.CombinedNameMapper
+import org.openmicroscopy.api.utils.ExtensionTransformer
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,15 +61,14 @@ class SplitTask extends SourceTask {
     private final DirectoryProperty outputDir = project.objects.directoryProperty()
 
     /**
-     * Optional rename params (from, to) that support regex
-     */
-    private final Property<ApiNamer> namer = project.objects.property(ApiNamer)
-
-    /**
      * List of the languages we want to split from .combinedFiles files
      */
     private final Property<Language> language = project.objects.property(Language)
 
+    /**
+     * Optional file name output transformer
+     */
+    private Transformer<String, String> nameTransformer = new CombinedNameMapper()
 
     private static final Logger Log = Logging.getLogger(SplitTask)
 
@@ -77,14 +78,13 @@ class SplitTask extends SourceTask {
             // Transform prefix enum to lower case for naming
             String prefixName = prefix.name().toLowerCase()
 
-            // Assign default to rename
-            ApiNamer apiNamer = namer.getOrElse(new ApiNamer())
-
             project.copy { CopySpec c ->
                 c.into outputDir.get()
                 c.from getSource()
-                c.rename apiNamer.getRenamer(prefix)
-                c.filter { String line -> filerLine(line, prefixName) }
+                c.rename createTransformer(prefix)
+                c.filter { String line ->
+                    filerLine(line, prefixName)
+                }
             }
 
             if (prefix == Prefix.JAV) {
@@ -138,12 +138,6 @@ class SplitTask extends SourceTask {
         return this.language
     }
 
-    @Input
-    @Optional
-    Property<ApiNamer> getNamer() {
-        return this.namer
-    }
-
     void setOutputDir(File dir) {
         this.outputDir.set(dir)
     }
@@ -172,12 +166,32 @@ class SplitTask extends SourceTask {
         this.language.set(lang)
     }
 
-    void setNamer(Provider<? extends ApiNamer> provider) {
-        this.namer.set(provider)
+    void rename(Closure closure) {
+        if (closure) {
+            this.nameTransformer = new ClosureBackedTransformer(closure)
+        }
     }
 
-    void setNamer(ApiNamer apiNamer) {
-        this.namer.set(apiNamer)
+    void rename(String replaceWith) {
+        if (replaceWith && replaceWith != "") {
+            this.nameTransformer = new CombinedNameMapper(replaceWith)
+        }
+    }
+
+    void rename(Transformer<String, String> transformer) {
+        if (transformer) {
+            this.nameTransformer = transformer
+        }
+    }
+
+    @Input
+    private String getNameTransformer() {
+        // This exists purely for up-to-date checking
+        return this.nameTransformer.transform("default.combined")
+    }
+
+    private Transformer<String, String> createTransformer(Prefix prefix) {
+        return new ExtensionTransformer(prefix, this.nameTransformer)
     }
 
     private static def filerLine(String line, String prefix) {
