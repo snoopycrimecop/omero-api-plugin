@@ -1,8 +1,9 @@
-package org.openmicroscopy.tasks
+package org.openmicroscopy.api.tasks
 
+import org.apache.commons.io.FilenameUtils
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-import org.openmicroscopy.AbstractBaseTest
+import org.openmicroscopy.api.AbstractBaseTest
 
 class SplitTaskTest extends AbstractBaseTest {
 
@@ -24,9 +25,14 @@ class SplitTaskTest extends AbstractBaseTest {
 
         then:
         result.task(':simpleSplit').outcome == TaskOutcome.SUCCESS
-        result.output.contains(".java")
-        outputDir.listFiles().length > 0
+        File[] output = outputDir.listFiles()
+        Collection<File> resultantFiles = output.findAll {
+            FilenameUtils.getExtension(it.name) == "java"
+        }
+        output.length == resultantFiles.size()
     }
+
+
 
 
 }

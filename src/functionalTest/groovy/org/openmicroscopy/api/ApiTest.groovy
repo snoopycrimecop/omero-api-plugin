@@ -1,4 +1,4 @@
-package org.openmicroscopy
+package org.openmicroscopy.api
 
 import org.gradle.testkit.runner.BuildResult
 

@@ -1,4 +1,4 @@
-package org.openmicroscopy
+package org.openmicroscopy.api
 
 import java.nio.file.Files
 import java.nio.file.Path

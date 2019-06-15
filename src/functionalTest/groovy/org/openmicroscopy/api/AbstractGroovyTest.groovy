@@ -1,4 +1,4 @@
-package org.openmicroscopy
+package org.openmicroscopy.api
 
 class AbstractGroovyTest extends AbstractTest {
 
