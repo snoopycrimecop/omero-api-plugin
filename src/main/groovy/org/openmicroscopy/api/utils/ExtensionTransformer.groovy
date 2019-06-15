@@ -26,8 +26,8 @@ class ExtensionTransformer implements Transformer<String, String> {
 
         // Add a file extension if one isn't present or is default (.combined)
         String fileExtension = FilenameUtils.getExtension(name)
-        if (fileExtension == null || fileExtension == "combined") {
-            name = FilenameUtils.getBaseName(name) + prefix.extension
+        if (fileExtension == null || fileExtension == "" || fileExtension == "combined") {
+            name = FilenameUtils.getBaseName(name) + "." + prefix.extension
             Log.quiet("Transforming extension from .$fileExtension to .$prefix.extension")
         }
 
