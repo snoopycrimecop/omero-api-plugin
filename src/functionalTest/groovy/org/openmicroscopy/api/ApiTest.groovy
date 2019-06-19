@@ -1,30 +1,29 @@
 package org.openmicroscopy.api
 
-import org.gradle.testkit.runner.BuildResult
+import groovy.io.FileType
 
 class ApiTest extends AbstractBaseTest {
 
     def "can pass with minimum configuration"() {
         given:
+        List<File> results = []
         File conventionOutputDir = new File(projectDir, "build/generated/sources/api")
         buildFile << """
             api {
                 combinedFiles.from(files("$combinedDir"))
             
                 language {
-                    java {
-                        outputDir "java"
-                    }
+                    java {}
                 }
             }
         """
 
         when:
-        BuildResult result = build("combinedToJava")
+        build("combinedToJava")
 
         then:
-        conventionOutputDir.listFiles() > 0
+        conventionOutputDir.traverse(type: FileType.FILES) { it -> results.add it }
+        !results.isEmpty()
     }
-
 
 }

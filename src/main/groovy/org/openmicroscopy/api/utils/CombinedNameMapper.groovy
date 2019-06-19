@@ -1,21 +1,37 @@
 package org.openmicroscopy.api.utils
 
 import groovy.transform.CompileStatic
-import org.gradle.api.internal.file.copy.RegExpNameMapper
+import org.gradle.api.Transformer
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 @CompileStatic
-class CombinedNameMapper extends RegExpNameMapper {
+class CombinedNameMapper implements Transformer<String, String> {
 
-    public static final String COMBINED_SOURCE_REGEX = "(.*?)I[.]combined"
+    public static final String COMBINED_SOURCE_REGEX = "(.*?).combined"
 
-    public static final String DEFAULT_RESULT_NAME = "\$1I"
+    public static final String DEFAULT_RESULT_NAME = "\$1"
 
-    CombinedNameMapper(String replaceWith) {
-        super(COMBINED_SOURCE_REGEX, replaceWith)
-    }
+    private Matcher matcher
+    private String replacement
 
     CombinedNameMapper() {
-        super(COMBINED_SOURCE_REGEX, DEFAULT_RESULT_NAME)
+        this(DEFAULT_RESULT_NAME)
+    }
+
+    CombinedNameMapper(String replaceWith) {
+        matcher = Pattern.compile(COMBINED_SOURCE_REGEX).matcher("")
+        replacement = replaceWith
+    }
+
+    @Override
+    String transform(String source) {
+        matcher.reset(source)
+        if (matcher.find()) {
+            return matcher.replaceFirst(replacement)
+        }
+        return null
     }
 
 }

@@ -1,6 +1,8 @@
 [ice] #include <file.ice>
 [hdr] #include <stdio.h>
 
+[jav] package org.openmicroscopy.example;
+[jav]
 [jav] public class SomeClass {
 [jav]      SomeClass() { }
 [jav] }

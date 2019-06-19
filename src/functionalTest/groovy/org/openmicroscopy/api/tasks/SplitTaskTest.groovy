@@ -7,7 +7,32 @@ import org.openmicroscopy.api.AbstractBaseTest
 
 class SplitTaskTest extends AbstractBaseTest {
 
-    def "can transform resulting file extensions to language extension"() {
+    def "should create file with correct extension based on chosen language"() {
+        given:
+        File outputDir = new File(projectDir, "splitResults")
+        buildFile << """
+            import org.openmicroscopy.api.tasks.SplitTask
+
+            task simpleSplit(type: SplitTask) {
+                language = "python"
+                outputDir = file("$outputDir")
+                source = file("$combinedDir")
+            }
+        """
+
+        when:
+        BuildResult result = build('simpleSplit')
+
+        then:
+        result.task(':simpleSplit').outcome == TaskOutcome.SUCCESS
+        File[] output = outputDir.listFiles()
+        Collection<File> resultantFiles = output.findAll {
+            FilenameUtils.getExtension(it.name) == "py"
+        }
+        output.length == resultantFiles.size()
+    }
+
+    def "should output java files in directory according to package"() {
         given:
         File outputDir = new File(projectDir, "splitResults")
         buildFile << """
@@ -25,14 +50,11 @@ class SplitTaskTest extends AbstractBaseTest {
 
         then:
         result.task(':simpleSplit').outcome == TaskOutcome.SUCCESS
-        File[] output = outputDir.listFiles()
-        Collection<File> resultantFiles = output.findAll {
-            FilenameUtils.getExtension(it.name) == "java"
-        }
-        output.length == resultantFiles.size()
+
+        // Files should be located under package (org.openmicroscopy.example)
+        File[] output = new File(outputDir, "org/openmicroscopy/example").listFiles()
+        output.length == output.size()
     }
-
-
 
 
 }
