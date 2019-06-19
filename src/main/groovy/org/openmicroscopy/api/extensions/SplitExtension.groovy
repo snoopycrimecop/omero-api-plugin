@@ -20,6 +20,7 @@
  */
 package org.openmicroscopy.api.extensions
 
+import groovy.transform.CompileStatic
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Transformer
@@ -28,8 +29,8 @@ import org.gradle.api.internal.file.copy.ClosureBackedTransformer
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.openmicroscopy.api.types.Language
-import org.openmicroscopy.api.utils.CombinedNameMapper
 
+@CompileStatic
 class SplitExtension {
 
     final String name
@@ -42,7 +43,12 @@ class SplitExtension {
 
     final Property<File> outputDir
 
-    Transformer<String, String> nameTransformer
+    private Transformer<String, String> nameTransformer = new Transformer<String, String>() {
+        @Override
+        String transform(String s) {
+            return s
+        }
+    }
 
     SplitExtension(String name, Project project) {
         this.name = name
@@ -50,12 +56,14 @@ class SplitExtension {
         this.combinedFiles = project.files()
         this.language = project.objects.property(Language)
         this.outputDir = project.objects.property(File)
-        this.nameTransformer = new CombinedNameMapper()
+
+        // Output dir convention is set to language type
+        this.outputDir.convention(this.language.map() {
+            new File(it.name().toLowerCase())
+        })
 
         // Optionally set language based on name of extension
-        Language lang = Language.values().find { lang ->
-            name.toUpperCase().contains(lang.name())
-        }
+        Language lang = Language.find(name)
         if (lang) {
             this.language.convention(lang)
         }
@@ -118,11 +126,14 @@ class SplitExtension {
     }
 
     void rename(Closure closure) {
-        this.nameTransformer = new ClosureBackedTransformer(closure)
+        rename(new ClosureBackedTransformer(closure))
     }
 
-    void rename(String replaceWith) {
-        this.nameTransformer = new CombinedNameMapper(replaceWith)
+    void rename(Transformer<String, String> transformer) {
+        this.nameTransformer = transformer
     }
 
+    Transformer<String, String> getNameTransformer() {
+        return nameTransformer
+    }
 }

@@ -44,7 +44,6 @@ import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
-import org.openmicroscopy.api.utils.CombinedNameMapper
 import org.openmicroscopy.api.utils.ExtensionTransformer
 
 import java.nio.file.Files
@@ -68,7 +67,12 @@ class SplitTask extends SourceTask {
     /**
      * Optional file name output transformer
      */
-    private Transformer<String, String> nameTransformer = new CombinedNameMapper()
+    private Transformer<String, String> nameTransformer = new Transformer<String, String>() {
+        @Override
+        String transform(String s) {
+            return s
+        }
+    }
 
     private static final Logger Log = Logging.getLogger(SplitTask)
 
@@ -169,12 +173,6 @@ class SplitTask extends SourceTask {
     void rename(Closure closure) {
         if (closure) {
             this.nameTransformer = new ClosureBackedTransformer(closure)
-        }
-    }
-
-    void rename(String replaceWith) {
-        if (replaceWith && replaceWith != "") {
-            this.nameTransformer = new CombinedNameMapper(replaceWith)
         }
     }
 

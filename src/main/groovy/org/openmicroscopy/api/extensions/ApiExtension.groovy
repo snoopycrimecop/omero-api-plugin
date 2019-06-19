@@ -20,6 +20,7 @@
  */
 package org.openmicroscopy.api.extensions
 
+import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
@@ -29,6 +30,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
 import org.openmicroscopy.api.ApiPluginBase
 
+@CompileStatic
 class ApiExtension {
 
     private final Project project
