@@ -32,8 +32,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.internal.file.copy.ClosureBackedTransformer
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
@@ -73,8 +71,6 @@ class SplitTask extends SourceTask {
             return s
         }
     }
-
-    private static final Logger Log = Logging.getLogger(SplitTask)
 
     @TaskAction
     void createSources() {
@@ -119,6 +115,9 @@ class SplitTask extends SourceTask {
 
                 // Move each file to package location
                 Files.move(javaFile.toPath(), packagePath.resolve(javaFile.name), StandardCopyOption.REPLACE_EXISTING)
+
+                // Log change
+                logger.info("Moving $javaFile.name from $outputDirFile to $packagePath")
             }
         }
     }
