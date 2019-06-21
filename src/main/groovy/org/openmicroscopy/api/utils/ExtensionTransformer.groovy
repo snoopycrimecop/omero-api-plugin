@@ -28,7 +28,7 @@ class ExtensionTransformer implements Transformer<String, String> {
         String fileExtension = FilenameUtils.getExtension(name)
         if (fileExtension == "" || fileExtension == "combined") {
             String newName = FilenameUtils.getBaseName(name) + "." + prefix.extension
-            Log.quiet("Transforming file from $name to $newName")
+            Log.info("Transforming file from $name to $newName")
             name = newName
         }
 
