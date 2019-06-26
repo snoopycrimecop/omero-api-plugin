@@ -35,6 +35,7 @@ import org.gradle.api.internal.file.copy.ClosureBackedTransformer
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -65,12 +66,7 @@ class SplitTask extends SourceTask {
     /**
      * Optional file name output transformer
      */
-    private Transformer<String, String> nameTransformer = new Transformer<String, String>() {
-        @Override
-        String transform(String s) {
-            return s
-        }
-    }
+    private Transformer<String, String> nameTransformer = noOpTransformer()
 
     @TaskAction
     void createSources() {
@@ -181,20 +177,27 @@ class SplitTask extends SourceTask {
         }
     }
 
-    @Input
-    private String getNameTransformer() {
-        // This exists purely for up-to-date checking
-        return this.nameTransformer.transform("default.combined")
+    @Nested
+    private Transformer<String, String> getNameTransformer() {
+        return this.nameTransformer
     }
 
     private Transformer<String, String> createTransformer(Prefix prefix) {
         return new ExtensionTransformer(prefix, this.nameTransformer)
     }
 
-    private static def filerLine(String line, String prefix) {
+    private static String filerLine(String line, String prefix) {
         return line.matches("^\\[all](.*)|^\\[${prefix}](.*)") ?
                 line.replaceAll("^\\[all]\\s?|^\\[${prefix}]\\s?", "") :
                 null
+    }
+
+    private static <T> Transformer<T, T> noOpTransformer() {
+        return new Transformer<T, T>() {
+            T transform(T original) {
+                return original
+            }
+        }
     }
 
 }
