@@ -1,3 +1,5 @@
+[![Actions Status](https://github.com/ome/omero-api-plugin/workflows/Gradle/badge.svg)](https://github.com/ome/omero-api-plugin/actions)
+
 ## OMERO api Gradle plugin
 
 The _omero-api-plugin_ is a [Gradle](https://gradle.org) plugin that provides
