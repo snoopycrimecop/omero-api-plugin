@@ -20,11 +20,12 @@
  */
 package org.openmicroscopy.api.factories
 
-
+import groovy.transform.CompileStatic
 import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Project
 import org.openmicroscopy.api.extensions.SplitExtension
 
+@CompileStatic
 class SplitFactory implements NamedDomainObjectFactory<SplitExtension> {
 
     final Project project

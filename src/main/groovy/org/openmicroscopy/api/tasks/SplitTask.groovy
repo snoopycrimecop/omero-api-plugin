@@ -20,18 +20,22 @@
  */
 package org.openmicroscopy.api.tasks
 
+import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.CompilationUnit
+import com.github.javaparser.ast.PackageDeclaration
 import groovy.transform.CompileStatic
 import org.gradle.api.GradleException
+import org.gradle.api.Transformer
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
+import org.gradle.api.internal.file.copy.ClosureBackedTransformer
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -39,7 +43,12 @@ import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 import org.openmicroscopy.api.types.Language
 import org.openmicroscopy.api.types.Prefix
-import org.openmicroscopy.api.utils.ApiNamer
+import org.openmicroscopy.api.utils.ExtensionTransformer
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 @CompileStatic
 class SplitTask extends SourceTask {
@@ -50,32 +59,61 @@ class SplitTask extends SourceTask {
     private final DirectoryProperty outputDir = project.objects.directoryProperty()
 
     /**
-     * Optional rename params (from, to) that support regex
-     */
-    private final Property<ApiNamer> namer = project.objects.property(ApiNamer)
-
-    /**
      * List of the languages we want to split from .combinedFiles files
      */
     private final Property<Language> language = project.objects.property(Language)
 
-
-    private static final Logger Log = Logging.getLogger(SplitTask)
+    /**
+     * Optional file name output transformer
+     */
+    private Transformer<String, String> nameTransformer = noOpTransformer()
 
     @TaskAction
-    void action() {
+    void createSources() {
         language.get().prefixes.each { Prefix prefix ->
             // Transform prefix enum to lower case for naming
             String prefixName = prefix.name().toLowerCase()
 
-            // Assign default to rename
-            ApiNamer apiNamer = namer.getOrElse(new ApiNamer())
-
-            project.sync { CopySpec c ->
-                c.into outputDir
+            project.copy { CopySpec c ->
+                c.into outputDir.get()
                 c.from getSource()
-                c.rename apiNamer.getRenamer(prefix)
-                c.filter { String line -> filerLine(line, prefixName) }
+                c.rename createTransformer(prefix)
+                c.filter { String line ->
+                    filerLine(line, prefixName)
+                }
+            }
+
+            if (prefix == Prefix.JAV) {
+                moveJavaFilesToPackage()
+            }
+        }
+    }
+
+    void moveJavaFilesToPackage() {
+        File outputDirFile = outputDir.asFile.get()
+
+        FileCollection javaSrc = project.fileTree(outputDirFile).matching {
+            include("**/*.java")
+        }
+
+        javaSrc.files.each { File javaFile ->
+            CompilationUnit cu = StaticJavaParser.parse(javaFile)
+
+            java.util.Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration()
+            if (packageDeclaration.present) {
+                String packageName = packageDeclaration.get().name
+
+                // Convert package to path, relative to outputDir
+                Path packagePath = Paths.get(outputDirFile.getPath(), packageName.replace(".", "/"))
+                if (!Files.exists(packagePath)) {
+                    Files.createDirectories(packagePath)
+                }
+
+                // Move each file to package location
+                Files.move(javaFile.toPath(), packagePath.resolve(javaFile.name), StandardCopyOption.REPLACE_EXISTING)
+
+                // Log change
+                logger.info("Moving $javaFile.name from $outputDirFile to $packagePath")
             }
         }
     }
@@ -97,12 +135,6 @@ class SplitTask extends SourceTask {
     @Input
     Property<Language> getLanguage() {
         return this.language
-    }
-
-    @Input
-    @Optional
-    Property<ApiNamer> getNamer() {
-        return this.namer
     }
 
     void setOutputDir(File dir) {
@@ -133,18 +165,39 @@ class SplitTask extends SourceTask {
         this.language.set(lang)
     }
 
-    void setNamer(Provider<? extends ApiNamer> provider) {
-        this.namer.set(provider)
+    void rename(Closure closure) {
+        if (closure) {
+            this.nameTransformer = new ClosureBackedTransformer(closure)
+        }
     }
 
-    void setNamer(ApiNamer apiNamer) {
-        this.namer.set(apiNamer)
+    void rename(Transformer<String, String> transformer) {
+        if (transformer) {
+            this.nameTransformer = transformer
+        }
     }
 
-    private static def filerLine(String line, String prefix) {
+    @Nested
+    private Transformer<String, String> getNameTransformer() {
+        return this.nameTransformer
+    }
+
+    private Transformer<String, String> createTransformer(Prefix prefix) {
+        return new ExtensionTransformer(prefix, this.nameTransformer)
+    }
+
+    private static String filerLine(String line, String prefix) {
         return line.matches("^\\[all](.*)|^\\[${prefix}](.*)") ?
                 line.replaceAll("^\\[all]\\s?|^\\[${prefix}]\\s?", "") :
                 null
+    }
+
+    private static <T> Transformer<T, T> noOpTransformer() {
+        return new Transformer<T, T>() {
+            T transform(T original) {
+                return original
+            }
+        }
     }
 
 }

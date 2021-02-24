@@ -20,6 +20,7 @@
  */
 package org.openmicroscopy.api.extensions
 
+import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
@@ -27,7 +28,9 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
+import org.openmicroscopy.api.ApiPluginBase
 
+@CompileStatic
 class ApiExtension {
 
     private final Project project
@@ -45,7 +48,11 @@ class ApiExtension {
         this.outputDir = project.objects.directoryProperty()
 
         // Set conventions
-        this.outputDir.convention(project.layout.projectDirectory.dir("src/api"))
+        this.outputDir.convention(project.layout.buildDirectory.dir("generated/sources/api"))
+    }
+
+    String createTaskName(String name) {
+        ApiPluginBase.TASK_PREFIX_COMBINED_TO + name.capitalize()
     }
 
     void language(Action<? super NamedDomainObjectContainer<SplitExtension>> action) {

@@ -1,0 +1,25 @@
+[ice] #include <file.ice>
+[hdr] #include <stdio.h>
+
+[jav] package org.openmicroscopy.example;
+[jav]
+[jav] public class SomeClass {
+[jav]      SomeClass() { }
+[jav] }
+
+[cpp] class SomeClass {
+[cpp] public:
+[cpp]      SomeClass() { }
+[cpp] }
+
+[ice] ["public"] class SomeClass
+[ice] {
+[ice]     module enums {
+[ice]         const string SomeString = "someString";
+[ice]     };
+[ice] }
+
+[pyc] class SomeClass():
+[pyc]   def __init__(self):
+
+[NOT] /* HELLO */

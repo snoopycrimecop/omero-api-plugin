@@ -30,7 +30,6 @@ import org.openmicroscopy.api.extensions.SplitExtension
 import org.openmicroscopy.api.factories.SplitFactory
 import org.openmicroscopy.api.tasks.SplitTask
 
-
 @CompileStatic
 class ApiPluginBase implements Plugin<Project> {
 
@@ -42,7 +41,7 @@ class ApiPluginBase implements Plugin<Project> {
 
     public static final String EXTENSION_NAME_API = "api"
 
-    public static final String TASK_PREFIX_GENERATE = "generate"
+    public static final String TASK_PREFIX_COMBINED_TO = "combinedTo"
 
     private static final def Log = Logging.getLogger(ApiPluginBase)
 
@@ -50,7 +49,7 @@ class ApiPluginBase implements Plugin<Project> {
     void apply(Project project) {
         ApiExtension api = createBaseExtension(project)
 
-        api.language.whenObjectAdded { SplitExtension split ->
+        api.language.configureEach { SplitExtension split ->
             registerSplitTask(project, api, split)
         }
     }
@@ -62,19 +61,18 @@ class ApiPluginBase implements Plugin<Project> {
     }
 
     static void registerSplitTask(Project project, ApiExtension api, SplitExtension split) {
-        String taskName = TASK_PREFIX_GENERATE + split.name.capitalize()
+        String taskName = api.createTaskName(split.name)
+
         project.tasks.register(taskName, SplitTask, new Action<SplitTask>() {
             @Override
-            void execute(SplitTask t) {
-                t.with {
-                    group = GROUP
-                    setDescription("Splits ${split.language} from .combined files")
-                    setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
-                    setLanguage(split.language)
-                    setNamer(split.renamer)
-                    source api.combinedFiles + split.combinedFiles
-                    include "**/*.combined"
-                }
+            void execute(SplitTask task) {
+                task.group = GROUP
+                task.setDescription("Splits ${split.language} from .combined files")
+                task.setOutputDir(split.outputDir.flatMap { File f -> api.outputDir.dir(f.toString()) })
+                task.setLanguage(split.language)
+                task.rename(split.nameTransformer)
+                task.source api.combinedFiles + split.combinedFiles
+                task.include "**/*.combined"
             }
         })
     }
