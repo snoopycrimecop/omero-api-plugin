@@ -7,7 +7,7 @@ group = "org.openmicroscopy"
 version = "5.5.1-SNAPSHOT"
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 java {
