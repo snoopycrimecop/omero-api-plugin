@@ -129,7 +129,7 @@ class SplitTask extends SourceTask {
         this.language.set(lang)
     }
 
-    void setLanguage(Property<? extends Language> lang) {
+    void setLanguage(Provider<? extends Language> lang) {
         this.language.set(lang)
     }
 
